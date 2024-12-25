@@ -28,5 +28,5 @@ pip install -r requirements.txt
 ## Run development server
 
 ```bash
-fastapi dev main.py
+fastapi dev main.py --port 8088
 ```

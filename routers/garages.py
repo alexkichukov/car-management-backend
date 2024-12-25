@@ -3,7 +3,7 @@ from sqlalchemy import func
 from sqlmodel import select
 
 from database import SessionDep
-from garages.models import Garage, GarageCreate, GaragePublic, GarageUpdate
+from models import Garage, GarageCreate, GaragePublic, GarageUpdate
 
 
 router = APIRouter(prefix="/garages", tags=["garages"])

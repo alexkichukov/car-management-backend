@@ -23,14 +23,13 @@ async def get_cars(
         query = query.where(func.lower(Car.make) == carMake.lower())
 
     if garageId:
-        # TODO: Implement this
-        pass
+        query = query.where(Car.garages.any(Garage.id == garageId))
 
     if fromYear:
-        query = query.where(Car.year >= fromYear)
+        query = query.where(Car.productionYear >= fromYear)
 
     if toYear:
-        query = query.where(Car.year <= toYear)
+        query = query.where(Car.productionYear <= toYear)
 
     cars = session.exec(query).all()
     return cars
@@ -50,13 +49,13 @@ async def get_car(car_id: int, session: SessionDep):
 async def create_car(car: CarCreate, session: SessionDep):
     car_db = Car.model_validate(car)
 
-    for id in car.garageIds:
-        garage = session.get(Garage, id)
+    if car.garageIds:
+        garages = session.exec(select(Garage).where(Garage.id.in_(car.garageIds))).all()
 
-        if not garage:
-            raise HTTPException(status_code=404, detail="Garage not found")
+        if len(garages) != len(car.garageIds):
+            raise HTTPException(status_code=404, detail="One or more garages not found")
 
-        car_db.garages.append(garage)
+        car_db.garages = garages
 
     session.add(car_db)
     session.commit()
@@ -77,15 +76,12 @@ async def update_car(car_id: int, car: CarUpdate, session: SessionDep):
     car_db.sqlmodel_update(car_data)
 
     if car.garageIds:
-        car_db.garages.clear()
+        garages = session.exec(select(Garage).where(Garage.id.in_(car.garageIds))).all()
 
-        for id in car.garageIds:
-            garage = session.get(Garage, id)
+        if len(garages) != len(car.garageIds):
+            raise HTTPException(status_code=404, detail="One or more garages not found")
 
-            if not garage:
-                raise HTTPException(status_code=404, detail="Garage not found")
-
-            car_db.garages.append(garage)
+        car_db.garages = garages
 
     session.add(car_db)
     session.commit()

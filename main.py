@@ -8,6 +8,7 @@ from database import setup_db
 from handlers import validation_exception_handler
 import routers.cars
 import routers.garages
+import routers.maintenance
 
 
 @asynccontextmanager
@@ -29,3 +30,4 @@ app.add_middleware(
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.include_router(routers.cars.router)
 app.include_router(routers.garages.router)
+app.include_router(routers.maintenance.router)

@@ -1,3 +1,4 @@
+import datetime
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -9,6 +10,7 @@ class CarGarageLink(SQLModel, table=True):
     )
 
 
+# Car
 class CarBase(SQLModel):
     make: str = Field(index=True)
     model: str = Field(index=True)
@@ -41,6 +43,7 @@ class CarPublic(CarBase):
     garages: list["GaragePublic"] = []
 
 
+# Garage
 class GarageBase(SQLModel):
     name: str = Field(index=True)
     location: str = Field(index=True)
@@ -66,3 +69,48 @@ class GarageUpdate(GarageBase):
 
 class GaragePublic(GarageBase):
     id: int
+
+
+# Maintenance
+class MaintenanceBase(SQLModel):
+    serviceType: str = Field(index=True)
+    scheduledDate: datetime.date = Field(index=True)
+
+
+class Maintenance(MaintenanceBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    carId: int = Field(default=None, foreign_key="car.id")
+    garageId: int = Field(default=None, foreign_key="garage.id")
+    car: Car = Relationship()
+    garage: Garage = Relationship()
+
+    def to_public(self) -> "MaintenancePublic":
+        return MaintenancePublic(
+            id=self.id,
+            serviceType=self.serviceType,
+            scheduledDate=self.scheduledDate,
+            carId=self.car.id,
+            carName=self.car.make + " " + self.car.model,
+            garageId=self.garage.id,
+            garageName=self.garage.name,
+        )
+
+
+class MaintenanceCreate(MaintenanceBase):
+    carId: int
+    garageId: int
+
+
+class MaintenanceUpdate(MaintenanceBase):
+    carId: int | None = None
+    garageId: int | None = None
+    serviceType: str | None = None
+    scheduledDate: datetime.date | None = None
+
+
+class MaintenancePublic(MaintenanceBase):
+    id: int
+    carId: int
+    carName: str
+    garageId: int
+    garageName: str

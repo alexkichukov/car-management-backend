@@ -1,4 +1,3 @@
-import logging
 import calendar
 from datetime import datetime, date
 from typing import Annotated
@@ -13,9 +12,6 @@ from models import (
     MaintenanceReport,
     MaintenanceReportYearMonth,
 )
-
-logger = logging.getLogger("uvicorn.error")
-logger.setLevel(logging.DEBUG)
 
 
 router = APIRouter(prefix="/maintenance", tags=["maintenance"])

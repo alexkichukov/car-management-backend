@@ -13,10 +13,10 @@ class CarGarageLink(SQLModel, table=True):
 
 # Car
 class CarBase(SQLModel):
-    make: str = Field(index=True)
-    model: str = Field(index=True)
-    productionYear: int = Field(index=True)
-    licensePlate: str = Field(index=True)
+    make: str = Field(index=True, min_length=1)
+    model: str = Field(index=True, min_length=1)
+    productionYear: int = Field(index=True, gt=0)
+    licensePlate: str = Field(index=True, min_length=1)
 
 
 class Car(CarBase, table=True):
@@ -24,6 +24,7 @@ class Car(CarBase, table=True):
     garages: list["Garage"] = Relationship(
         back_populates="cars", link_model=CarGarageLink
     )
+    maintenances: list["Maintenance"] = Relationship(back_populates="car")
 
 
 class CarCreate(CarBase):
@@ -32,10 +33,10 @@ class CarCreate(CarBase):
 
 
 class CarUpdate(CarBase):
-    make: str | None = None
-    model: str | None = None
-    productionYear: int | None = None
-    licensePlate: str | None = None
+    make: str | None = Field(min_length=1, default=None)
+    model: str | None = Field(min_length=1, default=None)
+    productionYear: int | None = Field(gt=0, default=None)
+    licensePlate: str | None = Field(min_length=1, default=None)
     garageIds: list[int] = []
 
 
@@ -46,15 +47,16 @@ class CarPublic(CarBase):
 
 # Garage
 class GarageBase(SQLModel):
-    name: str = Field(index=True)
-    location: str = Field(index=True)
-    city: str = Field(index=True)
-    capacity: int = Field(index=True)
+    name: str = Field(index=True, min_length=1)
+    location: str = Field(index=True, min_length=1)
+    city: str = Field(index=True, min_length=1)
+    capacity: int = Field(index=True, gt=0)
 
 
 class Garage(GarageBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     cars: list[Car] = Relationship(back_populates="garages", link_model=CarGarageLink)
+    maintenances: list["Maintenance"] = Relationship(back_populates="garage")
 
 
 class GarageCreate(GarageBase):
@@ -74,7 +76,7 @@ class GaragePublic(GarageBase):
 
 # Maintenance
 class MaintenanceBase(SQLModel):
-    serviceType: str = Field(index=True)
+    serviceType: str = Field(index=True, min_length=1)
     scheduledDate: datetime.date = Field(index=True)
 
 
@@ -82,8 +84,8 @@ class Maintenance(MaintenanceBase, table=True):
     id: int | None = Field(default=None, primary_key=True)
     carId: int = Field(default=None, foreign_key="car.id")
     garageId: int = Field(default=None, foreign_key="garage.id")
-    car: Car = Relationship()
-    garage: Garage = Relationship()
+    car: Car = Relationship(back_populates="maintenances")
+    garage: Garage = Relationship(back_populates="maintenances")
 
     def to_public(self) -> "MaintenancePublic":
         return MaintenancePublic(
@@ -105,7 +107,7 @@ class MaintenanceCreate(MaintenanceBase):
 class MaintenanceUpdate(MaintenanceBase):
     carId: int | None = None
     garageId: int | None = None
-    serviceType: str | None = None
+    serviceType: str | None = Field(min_length=1, default=None)
     scheduledDate: datetime.date | None = None
 
 

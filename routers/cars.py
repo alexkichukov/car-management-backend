@@ -98,11 +98,7 @@ async def delete_car(car_id: int, session: SessionDep):
         raise HTTPException(status_code=404, detail="Car not found")
 
     # Delete maintenances that use the car
-    maintenances = session.exec(
-        select(Maintenance).where(Maintenance.carId == car_id)
-    ).all()
-
-    for maintenance in maintenances:
+    for maintenance in car.maintenances:
         session.delete(maintenance)
 
     session.delete(car)

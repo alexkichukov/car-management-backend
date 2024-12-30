@@ -71,11 +71,7 @@ async def delete_garage(garage_id: int, session: SessionDep):
         session.add(car)
 
     # Delete maintenances that use the garage
-    maintenances = session.exec(
-        select(Maintenance).where(Maintenance.garageId == garage_id)
-    ).all()
-
-    for maintenance in maintenances:
+    for maintenance in garage.maintenances:
         session.delete(maintenance)
 
     session.delete(garage)

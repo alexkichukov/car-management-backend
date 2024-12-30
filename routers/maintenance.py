@@ -6,6 +6,8 @@ from sqlmodel import select
 
 from database import SessionDep
 from models import (
+    Car,
+    Garage,
     Maintenance,
     MaintenanceCreate,
     MaintenancePublic,
@@ -114,6 +116,26 @@ async def get_maintenance(maintenance_id: int, session: SessionDep):
 async def create_maintenance(maintenance: MaintenanceCreate, session: SessionDep):
     maintenance_db = Maintenance.model_validate(maintenance)
 
+    # Check if the garage and car exist
+    garage = session.get(Garage, maintenance.garageId)
+    car = session.get(Car, maintenance.carId)
+
+    if not garage:
+        raise HTTPException(status_code=400, detail="Invalid garageId provided")
+
+    if not car:
+        raise HTTPException(status_code=400, detail="Invalid carId provided")
+
+    # Check if the garage has enough capacity at that date
+    filled_capacity = sum(
+        1 for m in garage.maintenances if m.scheduledDate == maintenance.scheduledDate
+    )
+
+    if garage.capacity <= filled_capacity:
+        raise HTTPException(
+            status_code=400, detail="Garage is at full capacity for that date"
+        )
+
     session.add(maintenance_db)
     session.commit()
     session.refresh(maintenance_db)
@@ -129,6 +151,26 @@ async def update_maintenance(
 
     if not maintenance_db:
         raise HTTPException(status_code=404, detail="Maintenance not found")
+
+    # Check if the new garage and car exist
+    garage = session.get(Garage, maintenance.garageId)
+    car = session.get(Car, maintenance.carId)
+
+    if not garage:
+        raise HTTPException(status_code=400, detail="Invalid garageId provided")
+
+    if not car:
+        raise HTTPException(status_code=400, detail="Invalid carId provided")
+
+    # Check if the new garage has enough capacity at the new date
+    filled_capacity = sum(
+        1 for m in garage.maintenances if m.scheduledDate == maintenance.scheduledDate
+    )
+
+    if garage.capacity <= filled_capacity:
+        raise HTTPException(
+            status_code=400, detail="Garage is at full capacity for that date"
+        )
 
     maintenance_data = maintenance.model_dump(exclude_unset=True)
     maintenance_db.sqlmodel_update(maintenance_data)

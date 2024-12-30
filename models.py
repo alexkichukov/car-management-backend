@@ -74,6 +74,12 @@ class GaragePublic(GarageBase):
     id: int
 
 
+class GarageAvailabilityReport(BaseModel):
+    date: datetime.date
+    requests: int
+    availableCapacity: int
+
+
 # Maintenance
 class MaintenanceBase(SQLModel):
     serviceType: str = Field(index=True, min_length=1)

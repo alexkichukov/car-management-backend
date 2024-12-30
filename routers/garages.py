@@ -1,9 +1,16 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import func
 from sqlmodel import select
+from datetime import date, timedelta
 
 from database import SessionDep
-from models import Garage, GarageCreate, GaragePublic, GarageUpdate, Maintenance
+from models import (
+    Garage,
+    GarageAvailabilityReport,
+    GarageCreate,
+    GaragePublic,
+    GarageUpdate,
+)
 
 
 router = APIRouter(prefix="/garages", tags=["garages"])
@@ -18,6 +25,34 @@ async def get_garages(session: SessionDep, city: str | None = None):
 
     garages = session.exec(query).all()
     return garages
+
+
+@router.get("/dailyAvailabilityReport", response_model=list[GarageAvailabilityReport])
+async def get_daily_availability_report(
+    session: SessionDep, garageId: int, startDate: date, endDate: date
+):
+    garage = session.get(Garage, garageId)
+
+    report: list[GarageAvailabilityReport] = []
+
+    while startDate <= endDate:
+        requests = sum(
+            1
+            for maintenance in garage.maintenances
+            if maintenance.scheduledDate == startDate
+        )
+
+        report.append(
+            GarageAvailabilityReport(
+                date=startDate,
+                requests=requests,
+                availableCapacity=garage.capacity - requests,
+            )
+        )
+
+        startDate += timedelta(days=1)
+
+    return report
 
 
 @router.get("/{garage_id}", response_model=GaragePublic)

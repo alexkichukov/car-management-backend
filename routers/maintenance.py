@@ -68,7 +68,7 @@ async def get_monthly_requests_report(
 
     maintenances = session.exec(query).all()
 
-    result: list[MaintenanceReport] = []
+    report: list[MaintenanceReport] = []
 
     current_date = startDate
 
@@ -81,7 +81,7 @@ async def get_monthly_requests_report(
             and maintenance.scheduledDate.year == current_date.year
         )
 
-        result.append(
+        report.append(
             MaintenanceReport(
                 yearMonth=MaintenanceReportYearMonth(
                     year=current_date.year,
@@ -99,7 +99,7 @@ async def get_monthly_requests_report(
         else:
             current_date = current_date.replace(month=current_date.month + 1)
 
-    return result
+    return report
 
 
 @router.get("/{maintenance_id}", response_model=MaintenancePublic)

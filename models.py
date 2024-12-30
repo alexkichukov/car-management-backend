@@ -1,4 +1,5 @@
 import datetime
+from pydantic import BaseModel
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -114,3 +115,15 @@ class MaintenancePublic(MaintenanceBase):
     carName: str
     garageId: int
     garageName: str
+
+
+class MaintenanceReportYearMonth(BaseModel):
+    year: int
+    month: str
+    leapYear: bool
+    monthValue: int
+
+
+class MaintenanceReport(BaseModel):
+    yearMonth: MaintenanceReportYearMonth
+    requests: int

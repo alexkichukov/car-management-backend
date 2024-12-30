@@ -3,7 +3,7 @@ from sqlalchemy import func
 from sqlmodel import select
 
 from database import SessionDep
-from models import Garage, GarageCreate, GaragePublic, GarageUpdate
+from models import Garage, GarageCreate, GaragePublic, GarageUpdate, Maintenance
 
 
 router = APIRouter(prefix="/garages", tags=["garages"])
@@ -64,6 +64,19 @@ async def delete_garage(garage_id: int, session: SessionDep):
 
     if not garage:
         raise HTTPException(status_code=404, detail="Garage not found")
+
+    # Delete the garage from cars linked to it
+    for car in garage.cars:
+        car.garages.remove(garage)
+        session.add(car)
+
+    # Delete maintenances that use the garage
+    maintenances = session.exec(
+        select(Maintenance).where(Maintenance.garageId == garage_id)
+    ).all()
+
+    for maintenance in maintenances:
+        session.delete(maintenance)
 
     session.delete(garage)
     session.commit()

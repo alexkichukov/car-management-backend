@@ -3,7 +3,7 @@ from sqlalchemy import func
 from sqlmodel import select
 
 from database import SessionDep
-from models import Car, CarCreate, CarUpdate, CarPublic, Garage
+from models import Car, CarCreate, CarUpdate, CarPublic, Garage, Maintenance
 
 
 router = APIRouter(prefix="/cars", tags=["cars"])
@@ -88,3 +88,24 @@ async def update_car(car_id: int, car: CarUpdate, session: SessionDep):
     session.refresh(car_db)
 
     return car_db
+
+
+@router.delete("/{car_id}")
+async def delete_car(car_id: int, session: SessionDep):
+    car = session.get(Car, car_id)
+
+    if not car:
+        raise HTTPException(status_code=404, detail="Car not found")
+
+    # Delete maintenances that use the car
+    maintenances = session.exec(
+        select(Maintenance).where(Maintenance.carId == car_id)
+    ).all()
+
+    for maintenance in maintenances:
+        session.delete(maintenance)
+
+    session.delete(car)
+    session.commit()
+
+    return {"ok": True}

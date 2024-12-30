@@ -142,3 +142,16 @@ async def update_maintenance(
     session.refresh(maintenance_db)
 
     return maintenance_db.to_public()
+
+
+@router.delete("/{maintenance_id}")
+async def delete_maintenance(maintenance_id: int, session: SessionDep):
+    maintenance = session.get(Maintenance, maintenance_id)
+
+    if not maintenance:
+        raise HTTPException(status_code=404, detail="Maintenance not found")
+
+    session.delete(maintenance)
+    session.commit()
+
+    return {"ok": True}
